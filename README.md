@@ -2,19 +2,14 @@
 
 NVIDIA Fan Control Tool that uses NVIDIA's NVML library for direct hardware access without requiring X11 or nvidia-settings. It will work in background sessions and as a service.
 
-## Setup
-
-Install the NVML development package:
-
-```bash
-sudo apt-get install nvidia-utils-560
-sudo ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 /usr/lib/x86_64-linux-gnu/libnvidia-ml.so
-```
-
 # Build
 
 ```bash
-gcc gpu-fan-control.c -o gpu-fan-control -L/usr/lib/x86_64-linux-gnu -lnvidia-ml
+# create symlink to libnvidia-ml.so.1
+sudo ln -s /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 /usr/lib/x86_64-linux-gnu/libnvidia-ml.so
+
+# build
+./build.sh
 ```
 
 # Install
@@ -58,4 +53,9 @@ sudo systemctl enable gpu-fan-control
 sudo systemctl start gpu-fan-control
 ```
 
-# Development
+Check status:
+
+```bash
+sudo systemctl status gpu-fan-control
+sudo journalctl -u gpu-fan-control -f
+```
