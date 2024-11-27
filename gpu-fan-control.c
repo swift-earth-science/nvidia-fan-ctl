@@ -16,10 +16,16 @@ int main() {
     unsigned int device_count, fan_speed, temp;
     nvmlDevice_t device;
     char name[NVML_DEVICE_NAME_BUFFER_SIZE];
+    char version[NVML_SYSTEM_DRIVER_VERSION_BUFFER_SIZE];
     
     // Initialize NVML
     result = nvmlInit();
     check_nvml_error(result, "initializing NVML");
+    
+    // Get NVML version
+    result = nvmlSystemGetDriverVersion(version, NVML_SYSTEM_DRIVER_VERSION_BUFFER_SIZE);
+    check_nvml_error(result, "getting driver version");
+    printf("NVML Driver Version: %s\n", version);
     
     // Get device count
     result = nvmlDeviceGetCount(&device_count);
@@ -52,10 +58,9 @@ int main() {
         }
         
         printf("Fan Speed: %u%%\n", fan_speed);
-        sleep(1);  // Update every second
+        sleep(1);
     }
     
-    // Cleanup
     nvmlShutdown();
     return 0;
 }
