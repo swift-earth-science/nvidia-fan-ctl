@@ -13,8 +13,9 @@ void check_nvml_error(nvmlReturn_t result, const char* message) {
 
 int main() {
     nvmlReturn_t result;
-    unsigned int device_count, fan_speed;
+    unsigned int device_count, fan_speed, temp;
     nvmlDevice_t device;
+    char name[NVML_DEVICE_NAME_BUFFER_SIZE];
     
     // Initialize NVML
     result = nvmlInit();
@@ -30,14 +31,27 @@ int main() {
     result = nvmlDeviceGetHandleByIndex(0, &device);
     check_nvml_error(result, "getting device handle");
     
+    // Get device name
+    result = nvmlDeviceGetName(device, name, NVML_DEVICE_NAME_BUFFER_SIZE);
+    check_nvml_error(result, "getting device name");
+    printf("GPU: %s\n", name);
+    
     while (1) {
         // Get fan speed
         result = nvmlDeviceGetFanSpeed(device, &fan_speed);
-        check_nvml_error(result, "getting fan speed");
+        if (result != NVML_SUCCESS) {
+            printf("Fan speed read error: %s\n", nvmlErrorString(result));
+        }
         
-        printf("GPU Fan Speed: %u%%\r", fan_speed);
-        fflush(stdout);
+        // Get temperature
+        result = nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &temp);
+        if (result != NVML_SUCCESS) {
+            printf("Temperature read error: %s\n", nvmlErrorString(result));
+        } else {
+            printf("GPU Temperature: %u°C  ", temp);
+        }
         
+        printf("Fan Speed: %u%%\n", fan_speed);
         sleep(1);  // Update every second
     }
     
