@@ -59,3 +59,11 @@ Check status:
 sudo systemctl status gpu-fan-control
 sudo journalctl -u gpu-fan-control -f
 ```
+
+Update:
+
+```bash
+sudo systemctl stop gpu-fan-control
+sudo cp -f ./gpu-fan-control /usr/local/bin/gpu-fan-control
+sudo systemctl start gpu-fan-control
+```

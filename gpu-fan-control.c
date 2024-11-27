@@ -14,8 +14,21 @@ void handle_signal(int signum) {
     running = 0;
 }
 
+// Reset fans to automatic control
+void restore_auto_fan_control() {
+    nvmlDeviceSetFanControlPolicy(device, 0, NVML_FAN_POLICY_TEMPERATURE_CONTINOUS_SW);
+    nvmlDeviceSetFanControlPolicy(device, 1, NVML_FAN_POLICY_TEMPERATURE_CONTINOUS_SW);
+    printf("Restored automatic fan control\n");
+}
+
 // Set fan speed and return 1 if successful, 0 if failed
 int set_fan_speed(unsigned int speed) {
+    // Switch to auto-control if speed is 0
+    if (speed == 0) {
+        restore_auto_fan_control();
+        return 0;
+    }
+
     nvmlReturn_t result;
 
     // Set manual fan control
@@ -46,13 +59,6 @@ unsigned int get_target_fan_speed(unsigned int temp) {
     if (temp >= 40) return 80;
     if (temp >= 30) return 30; 
     return 0;  // Stop fans below 30°C
-}
-
-// Reset fans to automatic control
-void restore_auto_fan_control() {
-    nvmlDeviceSetFanControlPolicy(device, 0, NVML_FAN_POLICY_TEMPERATURE_CONTINOUS_SW);
-    nvmlDeviceSetFanControlPolicy(device, 1, NVML_FAN_POLICY_TEMPERATURE_CONTINOUS_SW);
-    printf("Restored automatic fan control\n");
 }
 
 int main() {
