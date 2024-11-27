@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.json": "jsonc",
+        "nvml.h": "c"
+    }
+}
