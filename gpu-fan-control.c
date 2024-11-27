@@ -3,64 +3,60 @@
 #include <unistd.h>
 #include <nvml.h>
 
-void check_nvml_error(nvmlReturn_t result, const char* message) {
-    if (result != NVML_SUCCESS) {
-        fprintf(stderr, "Error %s: %s\n", message, nvmlErrorString(result));
-        nvmlShutdown();
-        exit(1);
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Usage: %s <fan_speed_percentage>\n", argv[0]);
+        return 1;
     }
-}
 
-int main() {
     nvmlReturn_t result;
-    unsigned int device_count, fan_speed, temp;
     nvmlDevice_t device;
-    char name[NVML_DEVICE_NAME_BUFFER_SIZE];
-    char version[NVML_SYSTEM_DRIVER_VERSION_BUFFER_SIZE];
-    
+    unsigned int fan_speed = atoi(argv[1]);
+
+    if (fan_speed > 100) {
+        printf("Fan speed must be between 0 and 100\n");
+        return 1;
+    }
+
     // Initialize NVML
     result = nvmlInit();
-    check_nvml_error(result, "initializing NVML");
-    
-    // Get NVML version
-    result = nvmlSystemGetDriverVersion(version, NVML_SYSTEM_DRIVER_VERSION_BUFFER_SIZE);
-    check_nvml_error(result, "getting driver version");
-    printf("NVML Driver Version: %s\n", version);
-    
-    // Get device count
-    result = nvmlDeviceGetCount(&device_count);
-    check_nvml_error(result, "getting device count");
-    
-    printf("Found %d NVIDIA devices\n", device_count);
-    
-    // Get handle for first GPU
-    result = nvmlDeviceGetHandleByIndex(0, &device);
-    check_nvml_error(result, "getting device handle");
-    
-    // Get device name
-    result = nvmlDeviceGetName(device, name, NVML_DEVICE_NAME_BUFFER_SIZE);
-    check_nvml_error(result, "getting device name");
-    printf("GPU: %s\n", name);
-    
-    while (1) {
-        // Get fan speed
-        result = nvmlDeviceGetFanSpeed(device, &fan_speed);
-        if (result != NVML_SUCCESS) {
-            printf("Fan speed read error: %s\n", nvmlErrorString(result));
-        }
-        
-        // Get temperature
-        result = nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &temp);
-        if (result != NVML_SUCCESS) {
-            printf("Temperature read error: %s\n", nvmlErrorString(result));
-        } else {
-            printf("GPU Temperature: %u°C  ", temp);
-        }
-        
-        printf("Fan Speed: %u%%\n", fan_speed);
-        sleep(1);
+    if (result != NVML_SUCCESS) {
+        printf("Failed to initialize NVML: %s\n", nvmlErrorString(result));
+        return 1;
     }
-    
+
+    // Get the device handle
+    result = nvmlDeviceGetHandleByIndex(0, &device);
+    if (result != NVML_SUCCESS) {
+        printf("Failed to get device handle: %s\n", nvmlErrorString(result));
+        nvmlShutdown();
+        return 1;
+    }
+
+    // Set manual fan control
+    result = nvmlDeviceSetFanControlPolicy(device, 0, NVML_FAN_POLICY_MANUAL);
+    if (result != NVML_SUCCESS) {
+        printf("Failed to set fan control policy: %s\n", nvmlErrorString(result));
+        nvmlShutdown();
+        return 1;
+    }
+
+    // Set the fan speed
+    result = nvmlDeviceSetFanSpeed_v2(device, 0, fan_speed);
+    if (result != NVML_SUCCESS) {
+        printf("Failed to set fan speed: %s\n", nvmlErrorString(result));
+        nvmlShutdown();
+        return 1;
+    }
+
+    printf("Successfully set fan 0 to %u%%\n", fan_speed);
+
+    // Set the second fan if it exists
+    result = nvmlDeviceSetFanSpeed_v2(device, 1, fan_speed);
+    if (result == NVML_SUCCESS) {
+        printf("Successfully set fan 1 to %u%%\n", fan_speed);
+    }
+
     nvmlShutdown();
     return 0;
 }
