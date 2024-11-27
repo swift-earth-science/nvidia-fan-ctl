@@ -44,7 +44,8 @@ int set_fan_speed(unsigned int speed) {
 unsigned int get_target_fan_speed(unsigned int temp) {
     if (temp >= 50) return 100;
     if (temp >= 40) return 80;
-    return 30;  // Base speed for lower temperatures
+    if (temp >= 30) return 30; 
+    return 0;  // Stop fans below 30°C
 }
 
 // Reset fans to automatic control
